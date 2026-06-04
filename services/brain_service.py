@@ -49,3 +49,11 @@ class BrainService:
         resultados.sort(key=lambda x: x['score'], reverse=True)
 
         return resultados[:3]  # Devolvemos los 3 mejores resultados
+
+    def eliminar_apunte(self, texto):
+        """Recibe la orden de la interfaz y ordena a la BD que elimine el texto."""
+        if texto:
+            # Cambiamos 'bd' por 'memoria' para que coincida con tu inicialización
+            self.memoria.eliminar_apunte(texto)
+            return True
+        return False

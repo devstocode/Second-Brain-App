@@ -26,3 +26,9 @@ class DatabaseManager:
     def obtener_todos(self):
         self.cursor.execute('SELECT * FROM recuerdos')
         return self.cursor.fetchall()
+
+    def eliminar_apunte(self, contenido_texto):
+        """Elimina un apunte de la base de datos buscando su contenido exacto."""
+        # Ejecutamos el borrado en la tabla 'recuerdos' buscando en la columna 'contenido'
+        self.cursor.execute("DELETE FROM recuerdos WHERE contenido = ?", (contenido_texto,))
+        self.conn.commit()
