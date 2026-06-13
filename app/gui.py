@@ -572,12 +572,24 @@ class VentanaPrincipal(ctk.CTk):
             if t['repetitions'] == 0:
                 due_status = "Nueva"
                 status_color = "#38bdf8"
-            elif t['interval'] <= 1:
-                due_status = "Vence Hoy"
-                status_color = "#ef4444"
             else:
-                due_status = f"Vence en {t['interval']} días"
-                status_color = "#94a3b8"
+                from datetime import datetime
+                try:
+                    hoy_date = datetime.now().date()
+                    due_date = datetime.strptime(t['due_date'], "%Y-%m-%d").date()
+                    dias_restantes = (due_date - hoy_date).days
+                except Exception:
+                    dias_restantes = 0
+                
+                if dias_restantes <= 0:
+                    due_status = "Vence Hoy"
+                    status_color = "#ef4444"
+                elif dias_restantes == 1:
+                    due_status = "Vence Mañana"
+                    status_color = "#ca8a04"
+                else:
+                    due_status = f"Vence en {dias_restantes} días"
+                    status_color = "#94a3b8"
 
             # Fila de pregunta con viñeta coloreada según estado
             q_frame = ctk.CTkFrame(card_item, fg_color="transparent")
