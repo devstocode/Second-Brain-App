@@ -449,17 +449,20 @@ class VentanaPrincipal(ctk.CTk):
         search_bar_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
         search_bar_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
 
-        self.entry_buscar_tarjetas = ctk.CTkEntry(search_bar_frame, placeholder_text="Buscar en preguntas, respuestas o tags...", width=320, height=32)
-        self.entry_buscar_tarjetas.pack(side="left")
-        self.entry_buscar_tarjetas.bind("<KeyRelease>", lambda event: self.filtrar_tarjetas())
-
-        btn_filter = ctk.CTkButton(search_bar_frame, text="Filtrar", width=60, height=32, fg_color="#2b2b2b", hover_color="#333333")
-        btn_filter.pack(side="left", padx=5)
-
-        btn_add_card = ctk.CTkButton(search_bar_frame, text="+ Añadir Tarjeta", width=140, height=32, font=("Arial", 12, "bold"),
+        # Empaquetamos de derecha a izquierda para evitar que los botones se recorten en pantallas pequeñas
+        btn_add_card = ctk.CTkButton(search_bar_frame, text="+ Añadir Tarjeta", width=180, height=32, font=("Arial", 12, "bold"),
                                      fg_color=COLOR_AZUL, hover_color=COLOR_AZUL_HOVER,
                                      command=lambda: self.mostrar_subframe_crear_tarjeta(self.active_mazo_id))
-        btn_add_card.pack(side="right")
+        btn_add_card.pack(side="right", padx=(10, 0))
+
+        btn_filter = ctk.CTkButton(search_bar_frame, text="Filtrar", width=70, height=32, 
+                                   fg_color="#2b2b2b", hover_color="#333333", border_width=1, border_color=COLOR_BORDE,
+                                   command=self.filtrar_tarjetas)
+        btn_filter.pack(side="right", padx=(5, 0))
+
+        self.entry_buscar_tarjetas = ctk.CTkEntry(search_bar_frame, placeholder_text="Buscar en preguntas, respuestas o tags...", height=32, fg_color=COLOR_BG_SUBTARJETA, border_color=COLOR_BORDE)
+        self.entry_buscar_tarjetas.pack(side="left", fill="x", expand=True)
+        self.entry_buscar_tarjetas.bind("<KeyRelease>", lambda event: self.filtrar_tarjetas())
 
         # Scroll de tarjetas
         self.scroll_tarjetas = ctk.CTkScrollableFrame(right_panel, fg_color=COLOR_BG_TARJETA, corner_radius=12, border_width=1, border_color=COLOR_BORDE)
