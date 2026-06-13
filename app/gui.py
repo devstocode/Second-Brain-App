@@ -648,7 +648,7 @@ class VentanaPrincipal(ctk.CTk):
         self.opt_mazo_creacion = ctk.CTkOptionMenu(top_frame, values=[], width=150, height=28)
         self.opt_mazo_creacion.pack(side="left")
 
-        btn_save = ctk.CTkButton(top_frame, text="💾 Guardar Tarjeta", width=120, height=32, font=("Arial", 12, "bold"),
+        btn_save = ctk.CTkButton(top_frame, text="💾 Guardar Tarjeta", width=160, height=32, font=("Arial", 12, "bold"),
                                  fg_color=COLOR_AZUL, hover_color=COLOR_AZUL_HOVER,
                                  command=self.guardar_nueva_tarjeta)
         btn_save.pack(side="right")
