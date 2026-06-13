@@ -84,6 +84,7 @@ class VentanaPrincipal(ctk.CTk):
         self.active_tarjetas_estudio = []
         self.idx_tarjeta_actual = 0
         self.revelado = False
+        self.editing_tarjeta_id = None
         
         # Timer de estudio
         self.study_start_time = 0
@@ -251,10 +252,10 @@ class VentanaPrincipal(ctk.CTk):
         self.subframe_detalles_mazo.grid(row=0, column=0, sticky="nsew")
         self.cargar_detalles_mazo(mazo_id)
 
-    def mostrar_subframe_crear_tarjeta(self, mazo_id=None):
+    def mostrar_subframe_crear_tarjeta(self, mazo_id=None, tarjeta_id=None):
         self.ocultar_todos_los_subframes()
         self.subframe_crear_tarjeta.grid(row=0, column=0, sticky="nsew")
-        self.cargar_creador_tarjetas(mazo_id)
+        self.cargar_creador_tarjetas(mazo_id, tarjeta_id)
 
     def mostrar_subframe_estudiar(self, mazo_id):
         self.ocultar_todos_los_subframes()
@@ -617,9 +618,13 @@ class VentanaPrincipal(ctk.CTk):
             lbl_due = ctk.CTkLabel(footer_item, text=due_status, font=("Arial", 10, "bold"), text_color=status_color)
             lbl_due.pack(side="right")
 
+            btn_edit_card = ctk.CTkButton(card_item, text="✏️", width=30, height=28, fg_color="transparent", hover_color="#3b3b3b", text_color="#94a3b8",
+                                          command=lambda t_id=t['id']: self.mostrar_subframe_crear_tarjeta(self.active_mazo_id, t_id))
+            btn_edit_card.grid(row=0, column=1, padx=(0, 15), pady=(12, 4), sticky="ne")
+
             btn_del = ctk.CTkButton(card_item, text="🗑️", width=30, height=28, fg_color="transparent", hover_color="#991b1b", text_color="#ef4444",
                                     command=lambda t_id=t['id']: self.eliminar_tarjeta_y_recargar(t_id))
-            btn_del.grid(row=0, column=1, rowspan=2, padx=15, pady=10, sticky="e")
+            btn_del.grid(row=1, column=1, padx=(0, 15), pady=(4, 12), sticky="se")
 
     def eliminar_tarjeta_y_recargar(self, tarjeta_id):
         if messagebox.askyesno("Eliminar Tarjeta", "¿Seguro que quieres borrar esta tarjeta de estudio?"):
@@ -640,18 +645,18 @@ class VentanaPrincipal(ctk.CTk):
                                  command=lambda: self.mostrar_subframe_detalles_mazo(self.active_mazo_id))
         btn_back.pack(side="left")
 
-        lbl_title = ctk.CTkLabel(top_frame, text="NeuroCore Flashcards", font=("Arial", 20, "bold"))
-        lbl_title.pack(side="left", padx=15)
+        self.lbl_title_crear = ctk.CTkLabel(top_frame, text="NeuroCore Flashcards", font=("Arial", 20, "bold"))
+        self.lbl_title_crear.pack(side="left", padx=15)
 
         lbl_deck = ctk.CTkLabel(top_frame, text="Mazo:")
         lbl_deck.pack(side="left", padx=(20, 5))
         self.opt_mazo_creacion = ctk.CTkOptionMenu(top_frame, values=[], width=150, height=28)
         self.opt_mazo_creacion.pack(side="left")
 
-        btn_save = ctk.CTkButton(top_frame, text="💾 Guardar Tarjeta", width=160, height=32, font=("Arial", 12, "bold"),
-                                 fg_color=COLOR_AZUL, hover_color=COLOR_AZUL_HOVER,
-                                 command=self.guardar_nueva_tarjeta)
-        btn_save.pack(side="right")
+        self.btn_save_crear = ctk.CTkButton(top_frame, text="💾 Guardar Tarjeta", width=160, height=32, font=("Arial", 12, "bold"),
+                                        fg_color=COLOR_AZUL, hover_color=COLOR_AZUL_HOVER,
+                                        command=self.guardar_nueva_tarjeta)
+        self.btn_save_crear.pack(side="right")
 
         form_frame = ctk.CTkFrame(self.subframe_crear_tarjeta, fg_color="transparent")
         form_frame.grid(row=1, column=0, sticky="nsew", padx=30, pady=5)
@@ -706,13 +711,44 @@ class VentanaPrincipal(ctk.CTk):
 
         self.subframe_crear_tarjeta.grid_rowconfigure(2, weight=0)
 
-    def cargar_creador_tarjetas(self, mazo_id=None):
+    def cargar_creador_tarjetas(self, mazo_id=None, tarjeta_id=None):
+        self.editing_tarjeta_id = tarjeta_id
+        
         mazos = self.servicio_flashcards.obtener_todos_los_mazos()
         self.mazos_creacion_map = {m['nombre']: m['id'] for m in mazos}
         nombres = list(self.mazos_creacion_map.keys())
 
         if nombres:
             self.opt_mazo_creacion.configure(values=nombres)
+            
+            # Si estamos editando, cargamos la tarjeta existente
+            if tarjeta_id:
+                t_info = self.servicio_flashcards.obtener_tarjeta_por_id(tarjeta_id)
+                if t_info:
+                    self.lbl_title_crear.configure(text="✏️ Editar Tarjeta")
+                    self.btn_save_crear.configure(text="💾 Guardar Cambios")
+                    
+                    self.txt_pregunta.delete("0.0", "end")
+                    self.txt_pregunta.insert("0.0", t_info['pregunta'])
+                    
+                    self.txt_respuesta.delete("0.0", "end")
+                    self.txt_respuesta.insert("0.0", t_info['respuesta'])
+                    
+                    self.entry_tags.delete(0, "end")
+                    if t_info['tags']:
+                        self.entry_tags.insert(0, t_info['tags'])
+                        
+                    # Seleccionar mazo correcto
+                    for name, mid in self.mazos_creacion_map.items():
+                        if mid == t_info['mazo_id']:
+                            self.opt_mazo_creacion.set(name)
+                            break
+                    return
+
+            # Modo creación de nueva tarjeta
+            self.lbl_title_crear.configure(text="NeuroCore Flashcards")
+            self.btn_save_crear.configure(text="💾 Guardar Tarjeta")
+            
             if mazo_id:
                 mazo_info = self.servicio_flashcards.obtener_mazo_por_id(mazo_id)
                 if mazo_info and mazo_info['nombre'] in self.mazos_creacion_map:
@@ -739,14 +775,27 @@ class VentanaPrincipal(ctk.CTk):
             messagebox.showerror("Campos vacíos", "La pregunta y la respuesta son obligatorias.")
             return
 
-        exito, mensaje = self.servicio_flashcards.crear_tarjeta(mazo_id, pregunta, respuesta, tags)
-        if exito:
-            self.txt_pregunta.delete("0.0", "end")
-            self.txt_respuesta.delete("0.0", "end")
-            self.entry_tags.delete(0, "end")
-            messagebox.showinfo("Guardada", "¡Tarjeta agregada correctamente!")
+        if self.editing_tarjeta_id:
+            # Modo Edición
+            exito, mensaje = self.servicio_flashcards.actualizar_tarjeta(
+                self.editing_tarjeta_id, mazo_id, pregunta, respuesta, tags
+            )
+            if exito:
+                messagebox.showinfo("Actualizada", "¡Tarjeta actualizada correctamente!")
+                # Volver a los detalles del mazo
+                self.mostrar_subframe_detalles_mazo(self.active_mazo_id)
+            else:
+                messagebox.showerror("Error", mensaje)
         else:
-            messagebox.showerror("Error", mensaje)
+            # Modo Nueva Tarjeta
+            exito, mensaje = self.servicio_flashcards.crear_tarjeta(mazo_id, pregunta, respuesta, tags)
+            if exito:
+                self.txt_pregunta.delete("0.0", "end")
+                self.txt_respuesta.delete("0.0", "end")
+                self.entry_tags.delete(0, "end")
+                messagebox.showinfo("Guardada", "¡Tarjeta agregada correctamente!")
+            else:
+                messagebox.showerror("Error", mensaje)
 
     # ==========================================
     # --- VISTA 4: STUDY SESSION (ESTUDIO) ---

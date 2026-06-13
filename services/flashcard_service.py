@@ -216,3 +216,38 @@ class FlashcardService:
         self.db_manager.conn.commit()
 
         return True, f"Repaso registrado. Próxima fecha: {nueva_fecha_str} (en {interval} días)"
+
+    def obtener_tarjeta_por_id(self, tarjeta_id):
+        """Obtiene los detalles de una flashcard específica por su ID."""
+        self.db_manager.cursor.execute('''
+            SELECT id, mazo_id, pregunta, respuesta, tags
+            FROM flashcards
+            WHERE id = ?
+        ''', (tarjeta_id,))
+        row = self.db_manager.cursor.fetchone()
+        if row:
+            return {
+                'id': row[0],
+                'mazo_id': row[1],
+                'pregunta': row[2],
+                'respuesta': row[3],
+                'tags': row[4]
+            }
+        return None
+
+    def actualizar_tarjeta(self, tarjeta_id, mazo_id, pregunta, respuesta, tags):
+        """Actualiza los datos de una flashcard existente."""
+        pregunta = pregunta.strip()
+        respuesta = respuesta.strip()
+        if not pregunta or not respuesta:
+            return False, "La pregunta y la respuesta no pueden estar vacías."
+        try:
+            self.db_manager.cursor.execute('''
+                UPDATE flashcards
+                SET mazo_id = ?, pregunta = ?, respuesta = ?, tags = ?
+                WHERE id = ?
+            ''', (mazo_id, pregunta, respuesta, tags, tarjeta_id))
+            self.db_manager.conn.commit()
+            return True, "Tarjeta actualizada exitosamente."
+        except sqlite3.Error as e:
+            return False, f"Error al actualizar: {str(e)}"
