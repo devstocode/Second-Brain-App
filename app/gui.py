@@ -363,8 +363,8 @@ class VentanaPrincipal(ctk.CTk):
             # Botón de estudiar inferior
             btn_study = ctk.CTkButton(card, text="▶ Estudiar Ahora" if mazo['cartas_pendientes'] > 0 else "Repasar", 
                                       width=120, height=28, font=("Arial", 11, "bold"),
-                                      fg_color="#2b2b2b", text_color="#f8fafc", border_width=1, border_color=COLOR_BORDE,
-                                      hover_color="#333333",
+                                      fg_color=COLOR_AZUL, text_color="#f8fafc",
+                                      hover_color=COLOR_AZUL_HOVER,
                                       command=lambda m_id=mazo['id']: self.mostrar_subframe_estudiar(m_id))
             btn_study.grid(row=3, column=1, padx=5, pady=(5, 15), sticky="w")
 
@@ -479,9 +479,9 @@ class VentanaPrincipal(ctk.CTk):
         total = len(tarjetas)
         n_pendientes = len(pendientes)
         n_nuevas = sum(1 for t in tarjetas if t['repetitions'] == 0)
-        n_maestras = sum(1 for t in tarjetas if t['repetitions'] >= 4)
+        suma_repasos = sum(min(t['repetitions'], 4) for t in tarjetas)
         
-        porcentaje_maestria = int((n_maestras / total) * 100) if total > 0 else 0
+        porcentaje_maestria = int((suma_repasos / (total * 4)) * 100) if total > 0 else 0
         self.lbl_score_ai.configure(text=f"{porcentaje_maestria}%")
         self.prog_bar_ai.set(porcentaje_maestria / 100.0)
         

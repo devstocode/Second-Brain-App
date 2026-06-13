@@ -22,15 +22,16 @@ class FlashcardService:
     def obtener_todos_los_mazos(self):
         """
         Obtiene todos los mazos con el conteo de total de cartas, cartas pendientes
-        y el porcentaje de maestría (cartas con repetitions >= 4).
+        y el porcentaje de maestría calculado dinámicamente según la suma de repeticiones
+        (hasta un máximo de 4 por tarjeta).
         """
         self.db_manager.cursor.execute('''
             SELECT 
                 m.id, 
                 m.nombre,
                 COUNT(f.id) as total_cartas,
-                SUM(CASE WHEN f.due_date <= CURRENT_DATE THEN 1 ELSE 0 END) as cartas_pendientes,
-                SUM(CASE WHEN f.repetitions >= 4 THEN 1 ELSE 0 END) as cartas_maestras
+                SUM(CASE WHEN f.id IS NOT NULL AND f.due_date <= CURRENT_DATE THEN 1 ELSE 0 END) as cartas_pendientes,
+                SUM(CASE WHEN f.id IS NOT NULL THEN (CASE WHEN f.repetitions >= 4 THEN 4 ELSE f.repetitions END) ELSE 0 END) as suma_repasos
             FROM mazos m
             LEFT JOIN flashcards f ON m.id = f.mazo_id
             GROUP BY m.id, m.nombre
@@ -41,12 +42,12 @@ class FlashcardService:
         for r in rows:
             total = r[2] if r[2] else 0
             pendientes = r[3] if r[3] else 0
-            maestras = r[4] if r[4] else 0
+            suma_repasos = r[4] if r[4] else 0
             
             # Cálculo del porcentaje de maestría
             porcentaje_maestria = 0
             if total > 0:
-                porcentaje_maestria = int((maestras / total) * 100)
+                porcentaje_maestria = int((suma_repasos / (total * 4)) * 100)
                 
             mazos.append({
                 'id': r[0],
