@@ -407,7 +407,7 @@ class VentanaPrincipal(ctk.CTk):
         left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 10), pady=10)
 
         # AI Readiness Score card
-        score_card = ctk.CTkFrame(left_panel, fg_color=COLOR_BG_SUBTARJETA, corner_radius=8, height=140)
+        score_card = ctk.CTkFrame(left_panel, fg_color="transparent", height=140)
         score_card.pack(fill="x", padx=15, pady=15)
 
         lbl_score_title = ctk.CTkLabel(score_card, text="Preparación General (IA)", font=("Arial", 12), text_color="#94a3b8")
@@ -430,7 +430,7 @@ class VentanaPrincipal(ctk.CTk):
         self.lbl_new_now.pack(side="right")
 
         # Tags & Categories card
-        tags_card = ctk.CTkFrame(left_panel, fg_color=COLOR_BG_SUBTARJETA, corner_radius=8)
+        tags_card = ctk.CTkFrame(left_panel, fg_color="transparent")
         tags_card.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
         lbl_tags_title = ctk.CTkLabel(tags_card, text="Categorías y Etiquetas", font=("Arial", 12, "bold"), text_color="#f1f5f9")
@@ -540,28 +540,41 @@ class VentanaPrincipal(ctk.CTk):
             card_item.pack(fill="x", padx=15, pady=8)
             card_item.grid_columnconfigure(0, weight=1)
 
-            # Estructura del item similar al mockup
-            lbl_q = ctk.CTkLabel(card_item, text=t['pregunta'], font=("Arial", 13, "bold"), text_color="#f8fafc", anchor="w", justify="left", wraplength=420)
-            lbl_q.grid(row=0, column=0, padx=15, pady=(12, 4), sticky="w")
+            # Determinar estado y color
+            if t['repetitions'] == 0:
+                due_status = "Nueva"
+                status_color = "#38bdf8"
+            elif t['interval'] <= 1:
+                due_status = "Vence Hoy"
+                status_color = "#ef4444"
+            else:
+                due_status = f"Vence en {t['interval']} días"
+                status_color = "#94a3b8"
 
-            answer_box = ctk.CTkFrame(card_item, fg_color=COLOR_BG_SUBTARJETA, corner_radius=6)
-            answer_box.grid(row=1, column=0, padx=15, pady=(4, 12), sticky="ew")
+            # Fila de pregunta con viñeta coloreada según estado
+            q_frame = ctk.CTkFrame(card_item, fg_color="transparent")
+            q_frame.grid(row=0, column=0, padx=15, pady=(12, 4), sticky="w")
 
-            lbl_a = ctk.CTkLabel(answer_box, text=t['respuesta'], font=("Arial", 12), text_color="#94a3b8", anchor="w", justify="left", wraplength=400)
-            lbl_a.pack(padx=10, pady=8, anchor="w")
+            lbl_dot = ctk.CTkLabel(q_frame, text="•", font=("Arial", 18), text_color=status_color)
+            lbl_dot.pack(side="left", anchor="n", padx=(0, 5))
 
-            # Tag e info due
+            lbl_q = ctk.CTkLabel(q_frame, text=t['pregunta'], font=("Arial", 13, "bold"), text_color="#f8fafc", anchor="w", justify="left", wraplength=420)
+            lbl_q.pack(side="left", fill="x", expand=True)
+
+            # Fila de respuesta directamente sobre el fondo de la tarjeta (sin contenedor oscuro tipo input)
+            lbl_a = ctk.CTkLabel(card_item, text=t['respuesta'], font=("Arial", 12), text_color="#cbd5e1", anchor="w", justify="left", wraplength=440)
+            lbl_a.grid(row=1, column=0, padx=30, pady=(4, 12), sticky="w")
+
+            # Tag e info due en el pie de la tarjeta
             footer_item = ctk.CTkFrame(card_item, fg_color="transparent")
             footer_item.grid(row=2, column=0, columnspan=2, padx=15, pady=(0, 12), sticky="ew")
 
             t_tag = t['tags'].split(',')[0] if t['tags'] else "general"
-            lbl_t = ctk.CTkLabel(footer_item, text=f"#{t_tag}", font=("Arial", 10, "bold"), text_color="#64748b")
+            lbl_t = ctk.CTkLabel(footer_item, text=f" #{t_tag} ", font=("Arial", 10, "bold"), 
+                                 fg_color="#202020", text_color="#60a5fa", corner_radius=6)
             lbl_t.pack(side="left")
 
-            due_status = "Vence Hoy" if t['interval'] <= 1 else f"Vence en {t['interval']} días"
-            if t['repetitions'] == 0: due_status = "Nueva"
-            
-            lbl_due = ctk.CTkLabel(footer_item, text=due_status, font=("Arial", 10), text_color="#ca8a04" if due_status=="Vence Hoy" else COLOR_AZUL)
+            lbl_due = ctk.CTkLabel(footer_item, text=due_status, font=("Arial", 10, "bold"), text_color=status_color)
             lbl_due.pack(side="right")
 
             btn_del = ctk.CTkButton(card_item, text="🗑️", width=30, height=28, fg_color="transparent", hover_color="#991b1b", text_color="#ef4444",
