@@ -343,9 +343,17 @@ class VentanaPrincipal(ctk.CTk):
             lbl_badge = ctk.CTkLabel(card, text=badge_text, font=("Arial", 10, "bold"), fg_color=badge_color, text_color=badge_text_color, corner_radius=4)
             lbl_badge.grid(row=0, column=0, padx=15, pady=(15, 5), sticky="w")
 
-            # Tres puntos menú placeholder
+            # Tres puntos menú de opciones (Editar y Eliminar)
             lbl_dots = ctk.CTkLabel(card, text="•••", font=("Arial", 12), text_color="#64748b", cursor="hand2")
             lbl_dots.grid(row=0, column=1, padx=15, pady=(15, 5), sticky="e")
+
+            # Menú contextual para Editar/Eliminar mazo
+            menu = tk.Menu(self, tearoff=0, bg=COLOR_BG_TARJETA, fg="#f8fafc", activebackground=COLOR_AZUL, activeforeground="#f8fafc", bd=1)
+            menu.add_command(label="Editar Nombre", command=lambda m_id=mazo['id'], m_name=mazo['nombre']: self.editar_nombre_mazo_dialog(m_id, m_name))
+            menu.add_command(label="Eliminar Mazo", command=lambda m_id=mazo['id']: self.confirmar_eliminar_mazo(m_id))
+
+            # Bind para abrir el menú con clic izquierdo sobre los tres puntos
+            lbl_dots.bind("<Button-1>", lambda event, m=menu: m.tk_popup(event.x_root, event.y_root))
 
             # Título del mazo
             lbl_name = ctk.CTkLabel(card, text=mazo['nombre'], font=("Arial", 16, "bold"), anchor="w", text_color="#f8fafc")
@@ -368,10 +376,30 @@ class VentanaPrincipal(ctk.CTk):
                                       command=lambda m_id=mazo['id']: self.mostrar_subframe_estudiar(m_id))
             btn_study.grid(row=3, column=1, padx=5, pady=(5, 15), sticky="w")
 
-            # Botón pequeño de edición (tuerca) flotante
-            btn_edit = ctk.CTkButton(card, text="⚙️", width=28, height=28, fg_color="transparent", hover_color="#2b2b2b", text_color="#94a3b8",
-                                     command=lambda m_id=mazo['id']: self.mostrar_subframe_detalles_mazo(m_id))
-            btn_edit.grid(row=3, column=1, padx=15, pady=(5, 15), sticky="e")
+            # Vincular clic de navegación a detalles en toda la card
+            # excepto en el botón de estudiar y en el menú de tres puntos
+            def vincular_clicks_card(widget, m_id=mazo['id'], study_btn=btn_study, dots_lbl=lbl_dots):
+                if widget == study_btn or widget == dots_lbl:
+                    return
+                try:
+                    widget.configure(cursor="hand2")
+                except Exception:
+                    pass
+                widget.bind("<Button-1>", lambda event, m_id=m_id: self.mostrar_subframe_detalles_mazo(m_id))
+                for child in widget.winfo_children():
+                    vincular_clicks_card(child, m_id, study_btn, dots_lbl)
+
+            vincular_clicks_card(card)
+
+    def editar_nombre_mazo_dialog(self, mazo_id, nombre_actual):
+        dialog = ctk.CTkInputDialog(text=f"Introduce el nuevo nombre para el mazo '{nombre_actual}':", title="Editar Nombre Mazo")
+        nuevo_nombre = dialog.get_input()
+        if nuevo_nombre:
+            exito, mensaje = self.servicio_flashcards.editar_mazo(mazo_id, nuevo_nombre)
+            if exito:
+                self.actualizar_biblioteca_mazos()
+            else:
+                messagebox.showerror("Error", mensaje)
 
     def confirmar_eliminar_mazo(self, mazo_id):
         if messagebox.askyesno("Eliminar Mazo", "¿Estás seguro de que quieres eliminar este mazo? Se borrarán todas sus flashcards."):

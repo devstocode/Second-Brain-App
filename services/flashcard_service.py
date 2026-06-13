@@ -19,6 +19,18 @@ class FlashcardService:
         except sqlite3.IntegrityError:
             return False, "Ya existe un mazo con ese nombre."
 
+    def editar_mazo(self, mazo_id, nuevo_nombre):
+        """Edita el nombre de un mazo."""
+        nuevo_nombre = nuevo_nombre.strip()
+        if not nuevo_nombre:
+            return False, "El nombre del mazo no puede estar vacío."
+        try:
+            self.db_manager.cursor.execute('UPDATE mazos SET nombre = ? WHERE id = ?', (nuevo_nombre, mazo_id))
+            self.db_manager.conn.commit()
+            return True, "Nombre del mazo actualizado exitosamente."
+        except sqlite3.IntegrityError:
+            return False, "Ya existe un mazo con ese nombre."
+
     def obtener_todos_los_mazos(self):
         """
         Obtiene todos los mazos con el conteo de total de cartas, cartas pendientes
